@@ -57,60 +57,78 @@ def home():
 # MARKET ROUTE
 
 @app.get("/market")
-def market_data():
+def get_stock_data(company_name):
 
-    stocks = [
-        "AAPL",
-        "TSLA",
-        "NVDA",
-        "META"
-    ]
+    try:
 
-    market = []
+        company_name = company_name.lower().replace("stock", "").strip()
 
-    for ticker in stocks:
+        # =========================
+        # SEARCH DYNAMICALLY
+        # =========================
 
-        try:
+        result = search(company_name)
 
-            stock = yf.Ticker(ticker)
+        quotes = result.get("quotes")
 
-            data = stock.history(period="2d")
+        if not quotes:
+            return None
 
-            if data.empty:
-                continue
+        ticker = None
 
-            current_price = round(
-                data["Close"].iloc[-1],
-                2
-            )
+        # FIND VALID STOCK SYMBOL
 
-            previous_price = round(
-                data["Close"].iloc[-2],
-                2
-            )
+        for item in quotes:
 
-            change_percent = round(
-                (
-                    (
-                        current_price - previous_price
-                    ) / previous_price
-                ) * 100,
-                2
-            )
+            symbol = item.get("symbol")
 
-            market.append({
+            if symbol:
 
-                "ticker": ticker,
-                "price": current_price,
-                "change": change_percent
+                ticker = symbol
+                break
 
-            })
+        if not ticker:
+            return None
 
-        except Exception as e:
+        # =========================
+        # FETCH LIVE DATA
+        # =========================
 
-            print("MARKET ERROR:", e)
+        stock = yf.Ticker(ticker)
 
-    return market
+        data = stock.history(period="2d")
+
+        if data.empty or len(data) < 2:
+            return None
+
+        latest_price = round(
+            data["Close"].iloc[-1],
+            2
+        )
+
+        previous_close = round(
+            data["Close"].iloc[-2],
+            2
+        )
+
+        volume = int(
+            data["Volume"].iloc[-1]
+        )
+
+        return {
+
+            "ticker": ticker,
+            "price": latest_price,
+            "previous_close": previous_close,
+            "volume": volume
+
+        }
+
+    except Exception as e:
+
+        print("STOCK ERROR:", e)
+
+        return None
 
 # NEWS ROUTE
 

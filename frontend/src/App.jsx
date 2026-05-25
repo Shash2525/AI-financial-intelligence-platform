@@ -215,6 +215,7 @@ export default function App() {
   const [message, setMessage]     = useState("")
   const [chat, setChat]           = useState([])
   const [news, setNews]           = useState([])
+  const [marketData, setMarketData] = useState([])
   const [loading, setLoading]     = useState(false)
   const [chartSymbol, setChartSymbol] = useState("NASDAQ:AAPL")
   const [dots, setDots]           = useState("")
@@ -245,6 +246,25 @@ export default function App() {
       console.log(error)
     }
   }
+  const fetchMarketData = async () => {
+
+  try {
+
+    const response = await axios.get(
+      `${API}/market`
+    )
+
+    setMarketData(response.data)
+
+  }
+
+  catch (error) {
+
+    console.log(error)
+
+  }
+
+}
 
   // ====================== FETCH AI MARKET SUMMARY ======================
   const fetchMarketSummary = async () => {
@@ -261,6 +281,7 @@ export default function App() {
   useEffect(() => {
     fetchNews()
     fetchMarketSummary()
+    fetchMarketData()
   }, [])
 
   // ====================== CHART SWITCHING ======================
@@ -394,34 +415,58 @@ export default function App() {
 
             {/* Quick stat cards */}
             <div style={{
-              flex: "2",
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-              gap: "14px",
-            }}>
-              {[
-                { label: "Markets Open",   value: "NYSE ✅",   color: "#22c55e" },
-                { label: "Top Gainer",     value: "NVDA +3.5%", color: "#22c55e" },
-                { label: "Top Loser",      value: "TSLA -1.2%", color: "#ef4444" },
-                { label: "BTC Dominance",  value: "52.4%",      color: "#38bdf8" },
-              ].map((s, i) => (
-                <div key={i} style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: "16px",
-                  padding: "18px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "8px",
-                }}>
-                  <p style={{ fontSize: "12px", opacity: 0.6, margin: 0 }}>{s.label}</p>
-                  <p style={{ fontSize: "18px", fontWeight: "bold", color: s.color, margin: 0 }}>
-                    {s.value}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
+  flex: "2",
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+  gap: "14px",
+}}>
+
+  {marketData.map((stock, index) => (
+
+    <div
+      key={index}
+      style={{
+        background: "rgba(255,255,255,0.05)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: "16px",
+        padding: "18px",
+      }}
+    >
+
+      <p style={{
+        fontSize: "12px",
+        opacity: 0.6,
+        margin: 0
+      }}>
+        {stock.ticker}
+      </p>
+
+      <p style={{
+        fontSize: "22px",
+        fontWeight: "bold",
+        margin: "8px 0"
+      }}>
+        ${stock.price}
+      </p>
+
+      <p style={{
+        color:
+          stock.change >= 0
+            ? "#22c55e"
+            : "#ef4444",
+        fontWeight: "bold",
+        margin: 0
+      }}>
+        {stock.change >= 0 ? "▲" : "▼"}{" "}
+        {stock.change}%
+      </p>
+
+    </div>
+
+  ))}
+
+</div>
+</div>
 
           {/* NEWS CARDS */}
           <div style={{
