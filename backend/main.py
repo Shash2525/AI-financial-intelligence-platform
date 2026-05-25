@@ -11,29 +11,22 @@ from yahooquery import search
 import feedparser
 import os
 
-# =====================================
 # LOAD ENV
-# =====================================
 
 load_dotenv()
 
-# =====================================
 # GROQ CLIENT
-# =====================================
 
 client = Groq(
     api_key=os.getenv("GROQ_API_KEY")
 )
 
-# =====================================
 # FASTAPI
-# =====================================
 
 app = FastAPI()
 
 # =====================================
 # CORS
-# =====================================
 
 app.add_middleware(
     CORSMiddleware,
@@ -43,22 +36,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# =====================================
 # MEMORY
-# =====================================
 
 conversation_history = []
 
-# =====================================
 # REQUEST MODEL
-# =====================================
 
 class Message(BaseModel):
     text: str
 
-# =====================================
 # HOME ROUTE
-# =====================================
 
 @app.get("/")
 def home():
@@ -67,9 +54,7 @@ def home():
         "message": "Jarvis AI Backend Running"
     }
 
-# =====================================
 # MARKET ROUTE
-# =====================================
 
 @app.get("/market")
 def market_data():
@@ -127,9 +112,7 @@ def market_data():
 
     return market
 
-# =====================================
 # NEWS ROUTE
-# =====================================
 
 @app.get("/news")
 def get_news():
@@ -197,10 +180,67 @@ def get_news():
         print("NEWS ERROR:", e)
 
         return []
+    
+# MARKET SUMMARY ROUTE
 
-# =====================================
+@app.get("/market-summary")
+def market_summary():
+
+    try:
+
+        prompt = """
+
+        Give a short professional market summary
+        for today's global financial markets.
+
+        Include:
+        - US market sentiment
+        - AI sector
+        - crypto market
+        - risk appetite
+
+        Keep it under 60 words.
+        """
+
+        completion = client.chat.completions.create(
+
+            model="llama-3.3-70b-versatile",
+
+            messages=[
+
+                {
+                    "role": "system",
+                    "content": """
+                    You are an institutional
+                    financial markets analyst.
+                    """
+                },
+
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+
+            ]
+
+        )
+
+        summary = completion.choices[0].message.content
+
+        return {
+            "summary": summary
+        }
+
+    except Exception as e:
+
+        print("MARKET SUMMARY ERROR:", e)
+
+        return {
+            "summary":
+            "Global equities remain mixed while AI and semiconductor stocks continue showing relative strength."
+        }
+
 # STOCK DATA
-# =====================================
 
 def get_stock_data(company_name):
 
@@ -304,9 +344,7 @@ def get_stock_data(company_name):
 
         return None
 
-# =====================================
 # STOCK NEWS
-# =====================================
 
 def get_stock_news(company_name):
 
@@ -337,9 +375,7 @@ def get_stock_news(company_name):
 
         return []
 
-# =====================================
 # SENTIMENT ENGINE
-# =====================================
 
 def calculate_sentiment(stock_data, news_data):
 
@@ -422,9 +458,7 @@ def calculate_sentiment(stock_data, news_data):
     else:
         return "HIGH RISK"
 
-# =====================================
 # CHAT ROUTE
-# =====================================
 
 @app.post("/chat")
 def chat(message: Message):
@@ -440,9 +474,7 @@ def chat(message: Message):
 
         })
 
-        # ==========================
         # FINANCE DETECTION
-        # ==========================
 
         finance_keywords = [
 
@@ -470,32 +502,24 @@ def chat(message: Message):
 
         )
 
-        # ==========================
         # STOCK DATA
-        # ==========================
 
         stock_data = get_stock_data(user_text)
 
         print("STOCK DATA:", stock_data)
 
-        # ==========================
         # NEWS DATA
-        # ==========================
 
         news_data = get_stock_news(user_text)
 
-        # ==========================
         # SENTIMENT
-        # ==========================
 
         sentiment = calculate_sentiment(
             stock_data,
             news_data
         )
 
-        # ==========================
         # FINANCE MODE
-        # ==========================
 
         if is_finance_query:
 
@@ -556,10 +580,7 @@ and recent market news.
             return {
                 "reply": reply
             }
-
-        # ==========================
-        # NORMAL CHAT MODE
-        # ==========================
+# NORMAL CHAT MODE
 
         completion = client.chat.completions.create(
 
